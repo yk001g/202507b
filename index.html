@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geminiクエスト：叡智の探求者</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-item h3 {
+            color: #4a5568;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .level {
+            font-size: 2em;
+            font-weight: bold;
+            color: #e53e3e;
+        }
+
+        .points {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3182ce;
+        }
+
+        .title {
+            font-size: 1.2em;
+            color: #805ad5;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.5s ease;
+            border-radius: 15px;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .game-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .character {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 10px;
+            border-left: 5px solid #4299e1;
+        }
+
+        .character-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .character-dialogue {
+            flex: 1;
+        }
+
+        .character-name {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .dialogue-text {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .question-container {
+            margin: 30px 0;
+        }
+
+        .question-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option:hover {
+            border-color: #4299e1;
+            background: #f7fafc;
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .option.correct {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .option.incorrect {
+            border-color: #e53e3e;
+            background: #fed7d7;
+        }
+
+        .answer-feedback {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .feedback-correct {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            color: #22543d;
+        }
+
+        .feedback-incorrect {
+            background: #fed7d7;
+            border: 2px solid #e53e3e;
+            color: #742a2a;
+        }
+
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .explanation h4 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .explanation p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .visual-diagram {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+            font-style: italic;
+            color: #4a5568;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096, #4a5568);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74, 85, 104, 0.4);
+        }
+
+        .achievements {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #744210;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .chapter-header {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .chapter-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chapter-subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .results-panel {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .final-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #e53e3e;
+            margin-bottom: 20px;
+        }
+
+        .weakness-feedback {
+            background: #fff5cd;
+            border: 2px solid #d69e2e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .weakness-feedback h4 {
+            color: #744210;
+            margin-bottom: 10px;
+        }
+
+        .weakness-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .weakness-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .sparkle {
+            animation: sparkle 0.8s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🌟 Geminiクエスト：叡智の探求者 🌟</h1>
+            <p>Gemini AIについて学ぶインタラクティブな冒険ゲーム</p>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-grid">
+                <div class="status-item">
+                    <h3>現在のレベル</h3>
+                    <div class="level" id="current-level">1</div>
+                </div>
+                <div class="status-item">
+                    <h3>知識ポイント</h3>
+                    <div class="points" id="knowledge-points">0</div>
+                </div>
+                <div class="status-item">
+                    <h3>現在の称号</h3>
+                    <div class="title" id="current-title">駆け出しの探求者</div>
+                </div>
+                <div class="status-item">
+                    <h3>進行状況</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        <div class="progress-text" id="progress-text">0 / 20</div>
+                    </div>
+                </div>
+            </div>
+            <div class="achievements" id="achievements"></div>
+        </div>
+
+        <div class="game-panel" id="game-panel">
+            <div id="intro-screen">
+                <div class="character">
+                    <div class="character-avatar">🧚‍♀️</div>
+                    <div class="character-dialogue">
+                        <div class="character-name">ルミナ（知識の妖精）</div>
+                        <div class="dialogue-text">
+                            こんにちは、新たな探求者さん！わたし、ルミナです。あなたのGemini AIに関する知識を深める冒険のお手伝いをします。20の試練を乗り越え、真の「Gemini マスター」を目指しましょう！
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="startGame()">冒険を始める</button>
+                </div>
+            </div>
+
+            <div id="question-screen" class="hidden">
+                <div id="chapter-header" class="chapter-header">
+                    <div class="chapter-title" id="chapter-title"></div>
+                    <div class="chapter-subtitle" id="chapter-subtitle"></div>
+                </div>
+
+                <div class="character" id="current-character">
+                    <div class="character-avatar" id="character-avatar"></div>
+                    <div class="character-dialogue">
+                        <div class="character-name" id="character-name"></div>
+                        <div class="dialogue-text" id="character-dialogue"></div>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <div class="question-text" id="question-text"></div>
+                    <div class="options" id="options-container"></div>
+                    <div class="answer-feedback" id="answer-feedback"></div>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn btn-primary" id="next-button" onclick="nextQuestion()" disabled>次へ進む</button>
+                </div>
+            </div>
+
+            <div id="results-screen" class="hidden">
+                <div class="results-panel">
+                    <h2>🎉 冒険完了！ 🎉</h2>
+                    <div class="final-score" id="final-score"></div>
+                    <div id="final-title" class="title"></div>
+                    
+                    <div class="weakness-feedback" id="weakness-feedback">
+                        <h4>📚 復習推奨ポイント</h4>
+                        <ul class="weakness-list" id="weakness-list"></ul>
+                    </div>
+
+                    <div class="buttons">
+                        <button class="btn btn-primary" onclick="restartGame()">もう一度冒険する</button>
+                        <button class="btn btn-secondary" onclick="reviewWeaknesses()">弱点を復習する</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GeminiQuest {
+            constructor() {
+                this.currentQuestion = 0;
+                this.score = 0;
+                this.knowledgePoints = 0;
+                this.level = 1;
+                this.wrongAnswers = [];
+                this.achievements = [];
+                this.selectedAnswer = null;
+                
+                this.questions = [
+                    // Chapter 1: 始まりの平原 (基礎知識)
+                    {
+                        chapter: "第一章：始まりの平原",
+                        subtitle: "〜Geminiの輪郭〜",
+                        character: { name: "ルミナ", avatar: "🧚‍♀️" },
+                        dialogue: "まずは基本中の基本！Geminiの基礎的な特徴について確認していきましょう！",
+                        question: "Googleが開発した生成AI『Gemini』が特に連携を得意としているのは、次のうちどれでしょう？",
+                        options: [
+                            "Microsoft Office製品群",
+                            "AppleのiCloudサービス", 
+                            "Googleの各種サービス (Gmail, Google Docs, YouTubeなど)",
+                            "Adobe Creative Cloud"
+                        ],
+                        correct: 2,
+                        explanation: {
+                            title: "Geminiの統合力",
+                            content: "Geminiの大きな特徴の一つは、Googleの検索機能はもちろん、Gmail、Googleドキュメント、スプレッドシート、YouTube、Googleマップといった日常的に使う多くのGoogleサービスとシームレスに連携できる点です。これは、まるで優秀な執事が主人の持つ様々な道具や情報を完璧に把握し、必要な時に最適な形で提供してくれるようなものです。",
+                            visual: "🎯 中央にGeminiのアイコン → Gmail📧、Google Docs📄、YouTube📺、Google Map🗺️へ接続"
+                        }
+                    },
+                    {
+                        chapter: "第一章：始まりの平原",
+                        subtitle: "〜Geminiの輪郭〜",
+                        character: { name: "ルミナ", avatar: "🧚‍♀️" },
+                        dialogue: "Geminiの大きな特徴の一つ、マルチモーダル能力について学びましょう！",
+                        question: "Geminiが『マルチモーダルAI』と呼ばれる理由は何でしょうか？",
+                        options: [
+                            "一度にたくさんの言語を翻訳できる能力",
+                            "テキスト、画像、音声、動画など、複数の異なる種類のデータを統合的に処理・生成できる能力",
+                            "非常に複雑な計算を高速に行う能力",
+                            "特定の専門分野の知識だけを深く学習する能力"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "マルチモーダルの意味",
+                            content: "「マルチモーダル」とは、複数の「モダリティ（様相、形式）」を扱うという意味です。AIの文脈では、テキスト（文字）、画像、音声、動画といった異なる種類のデータを理解し、それらを組み合わせて新しい情報を生成する能力を指します。例えるなら、シェフが文字で書かれたレシピを読み、食材の写真を見て、調理中の音を聞き分け、完成した料理の動画を撮影して説明するような、複合的な作業をAIが行えるイメージです。",
+                            visual: "🎨 賢者のGemini：片手に本📖（テキスト）、絵筆🖌️（画像）、口から音符♪（音声）、足元にフィルム🎬（動画）"
+                        }
+                    },
+                    {
+                        chapter: "第一章：始まりの平原", 
+                        subtitle: "〜Geminiの輪郭〜",
+                        character: { name: "ルミナ", avatar: "🧚‍♀️" },
+                        dialogue: "Geminiの人気な使い方について確認してみましょう！",
+                        question: "2024年のGemini活用法トップ10で第1位に挙げられているのは、どのような使い方でしょうか？",
+                        options: [
+                            "雑談・おしゃべり",
+                            "プログラミング",
+                            "事実に関する調べもの", 
+                            "旅行のアイデア出し"
+                        ],
+                        correct: 2,
+                        explanation: {
+                            title: "情報検索の王者",
+                            content: "Geminiの活用法第1位は「事実に関する調べもの」です。これは、Googleの強みである検索機能との連携が活かされている結果と言えるでしょう。2位は「雑談・おしゃべり」、3位は「勉強のお手伝い」と続きます。Geminiが情報収集だけでなく、コミュニケーションや学習支援のツールとしても期待されていることがわかります。",
+                            visual: "🏆 表彰台：1位「事実調査🔍」、2位「雑談💬」、3位「学習📚」"
+                        }
+                    },
+                    {
+                        chapter: "第一章：始まりの平原",
+                        subtitle: "〜Geminiの輪郭〜", 
+                        character: { name: "ルミナ", avatar: "🧚‍♀️" },
+                        dialogue: "Geminiの基本的な仕組みについて理解を深めましょう！",
+                        question: "Geminiのような大規模言語モデル（LLM）が文章を生成する基本的な仕組みはどれでしょうか？",
+                        options: [
+                            "人間が事前に書いた答えのデータベースから最適なものを選択する",
+                            "大量のテキストデータから学習したパターンに基づいて、次に来る可能性の高い単語を予測しながら文章を生成する",
+                            "インターネットをリアルタイムで検索して情報をコピー&ペーストする",
+                            "特定のプログラムされたルールに従って決められた回答を出力する"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "AIの文章生成メカニズム",
+                            content: "大規模言語モデルは、インターネット上の膨大なテキストデータから言語のパターンを学習し、「この文脈では次にどの単語が来る可能性が高いか」を統計的に予測することで文章を生成します。これは、まるで経験豊富な作家が過去に読んだ無数の本の記憶を頼りに、文脈に最も適した言葉を選んで文章を紡いでいくようなプロセスです。完全に新しい文章を創造しているのではなく、学習したパターンの組み合わせから最適な表現を選択しているのです。",
+                            visual: "🧠 AI思考プロセス：大量テキスト📚 → パターン学習🔄 → 次単語予測🎯 → 文章生成✍️"
+                        }
+                    },
+                    {
+                        chapter: "第一章：始まりの平原",
+                        subtitle: "〜Geminiの輪郭〜",
+                        character: { name: "ルミナ", avatar: "🧚‍♀️" },
+                        dialogue: "最後に、AIの基本的な概念について確認しましょう！",
+                        question: "「生成AI」という用語の意味として最も適切なものはどれでしょうか？",
+                        options: [
+                            "人間の指示に基づいて新しいコンテンツ（文章、画像、音声など）を作り出すAI",
+                            "既存のデータを分析して分類や予測を行うAI",
+                            "人間の動作を真似してロボットを動かすAI", 
+                            "インターネット上の情報を検索して表示するAI"
+                        ],
+                        correct: 0,
+                        explanation: {
+                            title: "生成AIの本質",
+                            content: "「生成AI」とは、入力されたプロンプト（指示）に基づいて、新しいコンテンツを作り出すAIの総称です。文章、画像、音声、動画、プログラムコードなど、様々な形式のコンテンツを生成できます。これまでのAIが主に「分析・判断」を行うものだったのに対し、生成AIは「創造・制作」を担うという点で革新的です。まるで魔法使いが呪文（プロンプト）を唱えて新しいものを生み出すように、私たちの指示から全く新しいコンテンツを創造してくれるのです。",
+                            visual: "✨ 魔法の過程：指示📝 → AI魔法使い🧙‍♂️ → 新コンテンツ✨（文章、画像、音声、動画）"
+                        }
+                    },
+
+                    // Chapter 2: 賢者の書庫 (中級知識)
+                    {
+                        chapter: "第二章：賢者の書庫",
+                        subtitle: "〜知識の深化〜",
+                        character: { name: "ソフォス先生", avatar: "🦉" },
+                        dialogue: "ここからはより深い知識の領域じゃ。効果的なプロンプトの作り方について学ぼう。",
+                        question: "効果的なプロンプトを作成するための4つの基本要素として、適切でないものはどれでしょうか？",
+                        options: [
+                            "役割（ペルソナ）：Geminiに特定の専門家になりきってもらう",
+                            "指示（タスク）：Geminiに具体的に何をしてほしいか伝える",
+                            "感情（エモーション）：Geminiの機嫌を良くするための言葉を選ぶ",
+                            "出力形式：箇条書き、表形式など、望む形を指定する"
+                        ],
+                        correct: 2,
+                        explanation: {
+                            title: "プロンプトの科学",
+                            content: "効果的なプロンプトの4つの基本要素は「①役割（ペルソナ）」「②指示（タスク）」「③背景情報」「④出力形式」です。「感情（エモーション）」はここには含まれません。AIはあくまでプログラムであり、人間のような感情に基づいて応答が変わるわけではないからです。プロンプトの質を高める上で最も重要なのは、AIがタスクを正確に理解し、期待される形式で出力するために必要な情報を過不足なく提供することです。",
+                            visual: "⚙️ プロンプト設計図：役割🎭 + 指示📋 + 背景情報📊 + 出力形式📄 = 高品質回答💎"
+                        }
+                    },
+                    {
+                        chapter: "第二章：賢者の書庫", 
+                        subtitle: "〜知識の深化〜",
+                        character: { name: "ソフォス先生", avatar: "🦉" },
+                        dialogue: "プロンプトエンジニアリングの奥深さを理解するのじゃ。",
+                        question: "「あなたは経験豊富な料理研究家です。初心者でも作れる簡単なパスタレシピを、調理時間と難易度を明記して箇条書きで3つ教えてください。」このプロンプトに含まれていない要素はどれでしょうか？",
+                        options: [
+                            "役割設定（料理研究家として振る舞う）",
+                            "具体的な指示（パスタレシピを教える）",
+                            "出力形式の指定（箇条書きで3つ）",
+                            "使用する具体的な食材の制限"
+                        ],
+                        correct: 3,
+                        explanation: {
+                            title: "プロンプトの構成要素分析",
+                            content: "このプロンプトには役割設定（料理研究家）、具体的な指示（レシピを教える）、背景情報（初心者向け、簡単）、出力形式（箇条書きで3つ、調理時間と難易度明記）が含まれていますが、使用する具体的な食材の制限は指定されていません。プロンプトはこのように複数の要素を組み合わせることで、より精密で期待に沿った回答を得られます。足りない要素があると、AIは自由に解釈してしまう可能性があります。",
+                            visual: "🔍 プロンプト解剖：役割✅ + 指示✅ + 背景✅ + 形式✅ - 食材制限❌"
+                        }
+                    },
+                    {
+                        chapter: "第二章：賢者の書庫",
+                        subtitle: "〜知識の深化〜", 
+                        character: { name: "ソフォス先生", avatar: "🦉" },
+                        dialogue: "AIとの対話における重要な概念について学ぼう。",
+                        question: "Geminiとの対話において「コンテキスト」（文脈）が重要な理由として最も適切なものはどれでしょうか？",
+                        options: [
+                            "AIが人間の感情を理解するため",
+                            "過去の会話内容を記憶して、一貫性のある回答を提供するため",
+                            "AIのプログラムを自動的に更新するため",
+                            "インターネット接続を安定させるため"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "コンテキストの力",
+                            content: "AIとの対話において「コンテキスト」は、過去の会話の流れや背景情報を指します。AIは一つの会話セッション内で前の発言を記憶し、それを踏まえて回答するため、会話が自然で一貫性のあるものになります。これは人間同士の会話と同じで、前の話題を無視して突然別の話をされると困るのと同様です。コンテキストがあることで、「それについてもう少し詳しく」「先ほどの例で」といった指示も理解できるのです。",
+                            visual: "🔗 対話の流れ：質問1💬 → 回答1🤖 → 質問2💬（前の内容を参照） → 一貫した回答2🤖"
+                        }
+                    },
+                    {
+                        chapter: "第二章：賢者の書庫",
+                        subtitle: "〜知識の深化〜",
+                        character: { name: "ソフォス先生", avatar: "🦉" },
+                        dialogue: "プロンプトの高度なテクニックについて探求してみよう。",
+                        question: "「Chain of Thought」（思考の連鎖）プロンプティングとは何でしょうか？",
+                        options: [
+                            "複数のAIを連鎖的に使用する手法",
+                            "AIに段階的に推論過程を示してもらいながら問題を解決する手法",
+                            "長い文章を短く要約する手法",
+                            "AIの回答速度を向上させる手法"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "思考プロセスの可視化",
+                            content: "Chain of Thought（CoT）プロンプティングは、AIに「答えだけでなく、その答えに至る思考過程も示してもらう」手法です。例えば数学問題なら「まず○○を計算し、次に○○をして、最終的に答えは○○」というように段階的に説明させます。これにより、AIの推論がより正確になり、人間も思考過程を理解できるため、誤りを発見しやすくなります。まるで数学の授業で先生が途中式を書いて説明してくれるようなものです。",
+                            visual: "🧠 思考の可視化：問題❓ → 推論Step1🔍 → 推論Step2🔍 → 推論Step3🔍 → 最終回答💡"
+                        }
+                    },
+                    {
+                        chapter: "第二章：賢者の書庫",
+                        subtitle: "〜知識の深化〜",
+                        character: { name: "ソフォス先生", avatar: "🦉" },
+                        dialogue: "プロンプトの実践的な応用について学ぼう。",
+                        question: "Geminiに表形式でデータを整理してもらい、それをGoogleスプレッドシートにエクスポートする機能が最も役立つ場面はどれでしょうか？",
+                        options: [
+                            "単純な計算問題を解く場面",
+                            "大量の情報を比較検討し、構造化して理解したい場面",
+                            "詩や小説などの創作活動を行う場面",
+                            "音声での対話を行いたい場面"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "データ構造化の価値",
+                            content: "複数の対象について、それぞれの特徴や得意なことなどを比較したい場合、情報を表形式にまとめることで格段に理解しやすくなります。例えば、複数の生成AIの特徴比較、商品の価格・機能比較、学習計画の整理などです。Geminiがこれを自動で行い、スプレッドシートにエクスポートできれば、データの再利用やさらなる分析も容易になります。情報の海から価値ある知識を抽出する強力なツールなのです。",
+                            visual: "📊 情報整理プロセス：雑多な情報📋📋📋 → 表形式整理📄 → スプレッドシート📈 → 分析・活用💡"
+                        }
+                    },
+
+                    // Chapter 3: 未来技術研究所 (応用知識)
+                    {
+                        chapter: "第三章：未来技術研究所",
+                        subtitle: "〜応用と創造〜",
+                        character: { name: "ドクター・コードウェル", avatar: "👨‍🔬" },
+                        dialogue: "さあ、Geminiの画像認識能力について深く理解するのだ。",
+                        question: "Geminiに「この写真の花の名前と花言葉を教えて」と画像付きで質問した場合、最も適切な処理プロセスはどれでしょうか？",
+                        options: [
+                            "写真を無視して、一般的な花の名前をランダムに表示する",
+                            "写真から花の特徴を読み取り、学習データと照合して花を特定し、関連する花言葉を提示する",
+                            "写真の色情報だけを分析し、その色に合う花言葉を生成する",
+                            "撮影された位置情報から地域の花を推測して答える"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "マルチモーダル処理の仕組み",
+                            content: "Geminiの画像理解には複数のステップがあります。①画像認識技術で花の特徴（形、色、構造）を抽出 ②その特徴を膨大な学習データと照合して花の種類を特定 ③特定された花に関連する情報（花言葉など）を検索・生成して回答。これはAIが単に画像を「見る」だけでなく、その内容を「理解」し、テキスト情報と結びつけて応答できる能力の現れです。人間が花を見て知識と照合するプロセスに似ています。",
+                            visual: "🌸 画像解析プロセス：写真入力📷 → 特徴抽出🔍 → データ照合🗄️ → 花特定🌺 → 関連情報検索📚 → 回答生成💬"
+                        }
+                    },
+                    {
+                        chapter: "第三章：未来技術研究所",
+                        subtitle: "〜応用と創造〜",
+                        character: { name: "ドクター・コードウェル", avatar: "👨‍🔬" },
+                        dialogue: "Geminiの創造的な能力について実験してみよう。",
+                        question: "Geminiの「テキストから画像生成」機能について、最も適切な説明はどれでしょうか？",
+                        options: [
+                            "既存の写真データベースから最も近い画像を検索して表示する",
+                            "テキスト指示に基づいて、学習した視覚パターンから新しい画像を生成する",
+                            "インターネット上の画像をコピーして組み合わせる",
+                            "事前に用意されたテンプレートに文字を挿入する"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "AI画像生成の原理",
+                            content: "Geminiの画像生成は、膨大な画像とその説明文のペアから学習した視覚的パターンを基に、テキスト指示から全く新しい画像を創造します。これは既存の画像を組み合わせるのではなく、学習したパターンから「このような説明ならこのような視覚的要素が含まれるはず」という推論を行い、ピクセルレベルで新しい画像を生成するプロセスです。まるで画家が頭の中のイメージを具現化するように、AIも学習した視覚的知識を組み合わせて新しい作品を創造するのです。",
+                            visual: "🎨 創造プロセス：テキスト指示✍️ → 視覚パターン学習🧠 → イメージ構築🖼️ → ピクセル生成🎯 → 新画像創造✨"
+                        }
+                    },
+                    {
+                        chapter: "第三章：未来技術研究所",
+                        subtitle: "〜応用と創造〜",
+                        character: { name: "ドクター・コードウェル", avatar: "👨‍🔬" },
+                        dialogue: "Geminiの音声対話機能「Gemini Live」について学ぼう。",
+                        question: "Gemini Liveの音声対話機能が従来のテキスト入力と比べて持つ最大の利点は何でしょうか？",
+                        options: [
+                            "処理速度が格段に速くなる",
+                            "より自然で流動的な対話が可能になり、話し言葉特有のニュアンスも理解できる",
+                            "消費電力が大幅に削減される",
+                            "インターネット接続が不要になる"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "音声インターフェースの革新",
+                            content: "Gemini Liveの音声対話は、単に音声をテキストに変換するだけでなく、話し言葉特有の「えーっと」「つまり」といった間投詞、声のトーン、話すスピードなどからも情報を読み取り、より人間らしい自然な対話を実現します。また、リアルタイムでの応答により、まるで人間と会話しているような流動的なやり取りが可能になります。これは文字では表現しにくい微妙なニュアンスや感情的な要素も含めたコミュニケーションを可能にする画期的な進歩です。",
+                            visual: "🗣️ 音声対話の流れ：音声入力🎤 → 音声理解👂 → ニュアンス解析🎭 → 自然な回答生成💬 → 音声出力🔊"
+                        }
+                    },
+                    {
+                        chapter: "第三章：未来技術研究所",
+                        subtitle: "〜応用と創造〜",
+                        character: { name: "ドクター・コードウェル", avatar: "👨‍🔬" },
+                        dialogue: "AIアシスタントの未来的な活用法を探求してみよう。",
+                        question: "GeminiのようなマルチモーダルAIが将来的に最も大きな変革をもたらすと考えられる分野はどれでしょうか？",
+                        options: [
+                            "単純な計算作業の自動化",
+                            "創作・教育・研究など、複数の情報形式を組み合わせた高度な知的作業",
+                            "インターネットの速度向上",
+                            "ハードウェアの製造効率化"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "マルチモーダルAIの変革力",
+                            content: "マルチモーダルAIの真の力は、テキスト、画像、音声、動画を統合的に扱えることにあります。これにより、例えば教育では「図表を見ながら音声で説明し、テキストで補足する」複合的な指導が可能になり、研究では「データの可視化、文献調査、仮説検証、レポート作成」を一気通貫で支援できます。創作分野では「文章、イラスト、音楽、動画」を組み合わせた総合的なコンテンツ制作が可能です。人間の知的活動を全方位的にサポートする真のパートナーとなる可能性を秘めています。",
+                            visual: "🌐 統合的支援：教育📚 + 研究🔬 + 創作🎨 + 分析📊 = 知的活動の革命💡"
+                        }
+                    },
+                    {
+                        chapter: "第三章：未来技術研究所",
+                        subtitle: "〜応用と創造〜",
+                        character: { name: "ドクター・コードウェル", avatar: "👨‍🔬" },
+                        dialogue: "Geminiの限界と課題について科学的に考察しよう。",
+                        question: "現在のGeminiが抱える技術的課題として最も重要なものはどれでしょうか？",
+                        options: [
+                            "処理速度の遅さ",
+                            "学習データに含まれる偏見や誤情報、およびハルシネーション（事実と異なる情報の生成）",
+                            "ストレージ容量の不足",
+                            "ユーザーインターフェースの使いにくさ"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "AIの本質的課題",
+                            content: "現在の生成AIが抱える最も深刻な問題は、学習データに含まれる偏見（バイアス）や誤情報、そして「ハルシネーション」と呼ばれる現象です。ハルシネーションとは、AIが学習していない情報や存在しない事実を、あたかも真実のように生成してしまうことです。これは人間が夢を見るときに実際には体験していないことを体験しているように感じるのに似ています。AIは非常に説得力のある文章で間違った情報を提示することがあるため、批判的思考と事実確認が不可欠なのです。",
+                            visual: "⚠️ AI課題の構造：学習データ📚 → 偏見・誤情報混入☠️ → ハルシネーション🌀 → 誤った回答❌ → 検証の必要性✅"
+                        }
+                    },
+
+                    // Chapter 4: 星見の頂 (高度な概念・倫理)
+                    {
+                        chapter: "第四章：星見の頂",
+                        subtitle: "〜叡智との共存〜",
+                        character: { name: "アストライア", avatar: "🌟" },
+                        dialogue: "ついに最後の試練です。AIと人間の関係について深く考察しましょう。",
+                        question: "なぜGeminiの回答には常に「不正確な情報を表示することがあるため、生成された回答を再確認してください」という注意書きがあるのでしょうか？",
+                        options: [
+                            "Geminiが意図的に間違った情報を提供しているから",
+                            "システムエラーが頻繁に発生するから",
+                            "学習データに含まれる誤情報や偏見が回答に影響する可能性があるから",
+                            "創造性が豊かすぎて事実と異なる物語を作ってしまうから"
+                        ],
+                        correct: 2,
+                        explanation: {
+                            title: "AI知識の本質的限界",
+                            content: "生成AIは、インターネット上の膨大なデータを学習しますが、その元データには誤った情報、古い情報、特定の偏見が含まれている可能性があります。AIはこれらのデータを基に回答を生成するため、結果として不正確な情報や偏った見解を出力することがあります。これは博識な賢者でも、読んだ本に間違いがあれば、それを信じてしまう可能性があるのと同じです。だからこそ、AIを万能視せず、常に批判的な視点で検証することが重要なのです。",
+                            visual: "📚 知識の源泉：正確な情報✅ + 誤情報❌ + 偏見⚡ → AI学習🧠 → 回答生成💭 → 検証の必要性🔍"
+                        }
+                    },
+                    {
+                        chapter: "第四章：星見の頂",
+                        subtitle: "〜叡智との共存〜",
+                        character: { name: "アストライア", avatar: "🌟" },
+                        dialogue: "AIと人間の理想的な共存関係について考えましょう。",
+                        question: "Geminiのような生成AIと人間が今後より良く共存していくために最も重要な姿勢はどれでしょうか？",
+                        options: [
+                            "AIに全ての判断を委ね、人間はAIの指示に従うべき",
+                            "AIの能力を過信せず、限界とリスクを理解した上で、人間の判断力や創造性を補完するツールとして活用すべき",
+                            "AIとの競争に勝つため、人間はAI以上の知識とスピードを身につけるべき",
+                            "AIは危険なので利用を制限し、従来の作業方法を守るべき"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "共存の哲学",
+                            content: "AIと人間の理想的な関係は、AIを「賢いアシスタント」や「思考を助ける道具」として捉え、最終的な判断や創造的な作業の核心は人間が担うというものです。AIの強みを活かしつつ、人間の批判的思考、倫理観、経験知と組み合わせることで、より良い結果を生み出すことができます。これは人間が舵を取り、AIが帆となって船を進めるような関係です。技術の恩恵を最大限に享受しながら、そのリスクを適切に管理する賢明さが求められます。",
+                            visual: "🤝 共存の図：人間🧑‍🤝‍🧑（判断・創造・倫理） ↔ AI🤖（情報処理・支援・効率化） = より良い未来🌅"
+                        }
+                    },
+                    {
+                        chapter: "第四章：星見の頂",
+                        subtitle: "〜叡智との共存〜",
+                        character: { name: "アストライア", avatar: "🌟" },
+                        dialogue: "AIリテラシーの重要性について最後の考察をしましょう。",
+                        question: "「AIリテラシー」として最も重要な能力はどれでしょうか？",
+                        options: [
+                            "AIの技術的仕組みを完全に理解すること",
+                            "AIが生成した情報を批判的に評価し、適切に活用する能力",
+                            "AIよりも速く作業を行う能力",
+                            "AIを使わずに全ての作業を行う能力"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "デジタル時代の必須スキル",
+                            content: "AIリテラシーの本質は、AIが生成した情報を鵜呑みにするのではなく、その信頼性を評価し、複数の情報源と照合し、文脈に応じて適切に活用する能力です。これは情報リテラシーの発展形とも言えます。AIツールを効果的に使いこなすだけでなく、その限界を理解し、人間としての判断力を保持することが重要です。まるで地図とコンパスを使いこなす探検家のように、AIという強力な道具を使いつつ、自分自身の方向感覚も失わない知恵が求められるのです。",
+                            visual: "🧭 AIリテラシーの構成：批判的思考🤔 + 情報検証✅ + 適切な活用🎯 + 倫理的判断⚖️ = 賢明な利用者👨‍🎓"
+                        }
+                    },
+                    {
+                        chapter: "第四章：星見の頂",
+                        subtitle: "〜叡智との共存〜",
+                        character: { name: "アストライア", avatar: "🌟" },
+                        dialogue: "最後に、未来への展望について考えてみましょう。",
+                        question: "今後、AIテクノロジーが社会に与える最も重要な影響として予想されるものはどれでしょうか？",
+                        options: [
+                            "すべての仕事がAIに置き換えられ、人間の労働が不要になる",
+                            "人間の創造性や専門性がより重視され、AIとの協働により新たな価値創造の機会が拡大する",
+                            "AIが人間を支配し、人類の自由が失われる",
+                            "技術の進歩が完全に停止する"
+                        ],
+                        correct: 1,
+                        explanation: {
+                            title: "未来社会の青写真",
+                            content: "AIの発展により、確かに一部の作業は自動化されますが、同時に人間にしかできない創造的思考、共感力、倫理的判断、複雑な問題解決能力などがより重要になります。AIが効率的な作業を担うことで、人間はより高次の知的活動や人間関係の構築に集中できるようになるでしょう。これは産業革命時にも見られた現象で、新しい技術は新しい仕事と価値創造の機会を生み出します。重要なのは、この変化に適応し、AIと協働できる能力を身につけることです。",
+                            visual: "🚀 未来への道筋：AI効率化⚡ + 人間創造性🎨 + 協働関係🤝 = 新たな価値創造💎 → より豊かな社会🌈"
+                        }
+                    }
+                ];
+
+                this.characters = {
+                    "ルミナ": { name: "ルミナ（知識の妖精）", avatar: "🧚‍♀️" },
+                    "ソフォス先生": { name: "ソフォス先生（賢者のフクロウ）", avatar: "🦉" },
+                    "ドクター・コードウェル": { name: "ドクター・コードウェル（研究者）", avatar: "👨‍🔬" },
+                    "アストライア": { name: "アストライア（星の導き手）", avatar: "🌟" }
+                };
+
+                this.chapters = [
+                    { title: "第一章：始まりの平原", subtitle: "〜Geminiの輪郭〜", range: [0, 4] },
+                    { title: "第二章：賢者の書庫", subtitle: "〜知識の深化〜", range: [5, 9] },
+                    { title: "第三章：未来技術研究所", subtitle: "〜応用と創造〜", range: [10, 14] },
+                    { title: "第四章：星見の頂", subtitle: "〜叡智との共存〜", range: [15, 19] }
+                ];
+
+                this.titles = [
+                    "駆け出しの探求者",
+                    "Gemini初級者", 
+                    "知識の収集者",
+                    "プロンプト職人",
+                    "マルチモーダル理解者",
+                    "Geminiナビゲーター",
+                    "AI共存の賢者",
+                    "叡智の探求者"
+                ];
+            }
+
+            startGame() {
+                document.getElementById('intro-screen').classList.add('hidden');
+                document.getElementById('question-screen').classList.remove('hidden');
+                this.showQuestion();
+            }
+
+            showQuestion() {
+                const question = this.questions[this.currentQuestion];
+                
+                // Update chapter if needed
+                const currentChapter = this.getCurrentChapter();
+                if (currentChapter) {
+                    document.getElementById('chapter-title').textContent = currentChapter.title;
+                    document.getElementById('chapter-subtitle').textContent = currentChapter.subtitle;
+                }
+
+                // Update character
+                const char = this.characters[question.character.name] || question.character;
+                document.getElementById('character-avatar').textContent = char.avatar;
+                document.getElementById('character-name').textContent = char.name;
+                document.getElementById('character-dialogue').textContent = question.dialogue;
+
+                // Update question
+                document.getElementById('question-text').textContent = `【問題 ${this.currentQuestion + 1}】${question.question}`;
+
+                // Update options
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                
+                question.options.forEach((option, index) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'option';
+                    optionElement.textContent = `${String.fromCharCode(65 + index)}) ${option}`;
+                    optionElement.onclick = () => this.selectOption(index);
+                    optionsContainer.appendChild(optionElement);
+                });
+
+                // Reset state
+                this.selectedAnswer = null;
+                document.getElementById('next-button').disabled = true;
+                document.getElementById('answer-feedback').style.display = 'none';
+                document.getElementById('answer-feedback').className = 'answer-feedback';
+
+                // Update progress
+                this.updateProgress();
+            }
+
+            selectOption(index) {
+                const options = document.querySelectorAll('.option');
+                options.forEach(opt => opt.classList.remove('selected'));
+                options[index].classList.add('selected');
+                
+                this.selectedAnswer = index;
+                this.checkAnswer();
+            }
+
+            checkAnswer() {
+                const question = this.questions[this.currentQuestion];
+                const options = document.querySelectorAll('.option');
+                const feedback = document.getElementById('answer-feedback');
+                
+                const isCorrect = this.selectedAnswer === question.correct;
+                
+                // Mark correct and incorrect options
+                options.forEach((opt, index) => {
+                    if (index === question.correct) {
+                        opt.classList.add('correct');
+                    } else if (index === this.selectedAnswer && !isCorrect) {
+                        opt.classList.add('incorrect');
+                    }
+                });
+
+                // Show feedback
+                feedback.style.display = 'block';
+                
+                if (isCorrect) {
+                    feedback.className = 'answer-feedback feedback-correct';
+                    const points = this.getPointsForQuestion();
+                    this.score++;
+                    this.knowledgePoints += points;
+                    
+                    feedback.innerHTML = `
+                        <h3>🎉 正解！</h3>
+                        <p>素晴らしい！知識ポイント +${points}</p>
+                        ${this.checkForAchievements()}
+                    `;
+                } else {
+                    feedback.className = 'answer-feedback feedback-incorrect';
+                    this.wrongAnswers.push({
+                        questionNumber: this.currentQuestion + 1,
+                        topic: this.getQuestionTopic(),
+                        chapter: question.chapter
+                    });
+                    
+                    feedback.innerHTML = `
+                        <h3>❌ 不正解</h3>
+                        <p>正解は ${String.fromCharCode(65 + question.correct)}) でした。</p>
+                        <div class="explanation">
+                            <h4>📖 ${question.explanation.title}</h4>
+                            <p>${question.explanation.content}</p>
+                            ${question.explanation.visual ? `<div class="visual-diagram">${question.explanation.visual}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                document.getElementById('next-button').disabled = false;
+                this.updateLevel();
+                this.updateUI();
+            }
+
+            getPointsForQuestion() {
+                const chapter = Math.floor(this.currentQuestion / 5);
+                return 10 + (chapter * 5); // 基礎:10, 中級:15, 応用:20, 高度:25
+            }
+
+            getQuestionTopic() {
+                const question = this.questions[this.currentQuestion];
+                if (this.currentQuestion < 5) return "Geminiの基礎知識";
+                if (this.currentQuestion < 10) return "プロンプトエンジニアリング";
+                if (this.currentQuestion < 15) return "マルチモーダル機能と応用";
+                return "AI倫理と共存";
+            }
+
+            getCurrentChapter() {
+                for (let chapter of this.chapters) {
+                    if (this.currentQuestion >= chapter.range[0] && this.currentQuestion <= chapter.range[1]) {
+                        return chapter;
+                    }
+                }
+                return null;
+            }
+
+            checkForAchievements() {
+                let newAchievements = '';
+                
+                // Level-based achievements
+                if (this.score === 5 && !this.achievements.includes('基礎マスター')) {
+                    this.achievements.push('基礎マスター');
+                    newAchievements += '<div class="badge">🏆 基礎マスター</div>';
+                }
+                
+                if (this.score === 10 && !this.achievements.includes('中級達成者')) {
+                    this.achievements.push('中級達成者');
+                    newAchievements += '<div class="badge">🎖️ 中級達成者</div>';
+                }
+                
+                if (this.score === 15 && !this.achievements.includes('上級探求者')) {
+                    this.achievements.push('上級探求者');
+                    newAchievements += '<div class="badge">⭐ 上級探求者</div>';
+                }
+
+                // Perfect score achievement
+                if (this.currentQuestion === 19 && this.score === 20 && !this.achievements.includes('完璧な賢者')) {
+                    this.achievements.push('完璧な賢者');
+                    newAchievements += '<div class="badge">👑 完璧な賢者</div>';
+                }
+
+                return newAchievements;
+            }
+
+            updateLevel() {
+                const newLevel = Math.floor(this.knowledgePoints / 100) + 1;
+                if (newLevel > this.level) {
+                    this.level = newLevel;
+                    document.getElementById('current-level').classList.add('sparkle');
+                    setTimeout(() => {
+                        document.getElementById('current-level').classList.remove('sparkle');
+                    }, 800);
+                }
+            }
+
+            updateUI() {
+                document.getElementById('current-level').textContent = this.level;
+                document.getElementById('knowledge-points').textContent = this.knowledgePoints;
+                document.getElementById('current-title').textContent = this.titles[Math.min(this.level - 1, this.titles.length - 1)];
+                
+                // Update achievements display
+                const achievementsContainer = document.getElementById('achievements');
+                achievementsContainer.innerHTML = this.achievements.map(achievement => 
+                    `<div class="badge">${achievement}</div>`
+                ).join('');
+            }
+
+            updateProgress() {
+                const progress = ((this.currentQuestion + 1) / this.questions.length) * 100;
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+                document.getElementById('progress-text').textContent = `${this.currentQuestion + 1} / ${this.questions.length}`;
+            }
+
+            nextQuestion() {
+                this.currentQuestion++;
+                
+                if (this.currentQuestion >= this.questions.length) {
+                    this.showResults();
+                } else {
+                    this.showQuestion();
+                }
+            }
+
+            showResults() {
+                document.getElementById('question-screen').classList.add('hidden');
+                document.getElementById('results-screen').classList.remove('hidden');
+                
+                const percentage = Math.round((this.score / this.questions.length) * 100);
+                document.getElementById('final-score').textContent = `${this.score} / ${this.questions.length} (${percentage}%)`;
+                
+                let finalTitle = "駆け出しの探求者";
+                if (percentage >= 95) finalTitle = "Gemini グランドマスター";
+                else if (percentage >= 85) finalTitle = "叡智の探求者";
+                else if (percentage >= 75) finalTitle = "AI共存の賢者";
+                else if (percentage >= 65) finalTitle = "Geminiナビゲーター";
+                else if (percentage >= 50) finalTitle = "知識の収集者";
+                
+                document.getElementById('final-title').textContent = `最終称号：${finalTitle}`;
+                
+                // Show weaknesses
+                const weaknessList = document.getElementById('weakness-list');
+                if (this.wrongAnswers.length > 0) {
+                    weaknessList.innerHTML = this.wrongAnswers.map(weakness => 
+                        `<li>問題${weakness.questionNumber}: ${weakness.topic} (${weakness.chapter})</li>`
+                    ).join('');
+                } else {
+                    document.getElementById('weakness-feedback').innerHTML = 
+                        '<h4>🎉 完璧です！</h4><p>全問正解、素晴らしい知識レベルです！</p>';
+                }
+            }
+
+            restartGame() {
+                this.currentQuestion = 0;
+                this.score = 0;
+                this.knowledgePoints = 0;
+                this.level = 1;
+                this.wrongAnswers = [];
+                this.achievements = [];
+                this.selectedAnswer = null;
+                
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('intro-screen').classList.remove('hidden');
+                this.updateUI();
+                this.updateProgress();
+            }
+
+            reviewWeaknesses() {
+                if (this.wrongAnswers.length === 0) {
+                    alert('復習する必要がある問題はありません！完璧です🎉');
+                    return;
+                }
+                
+                // Create a subset of questions for review
+                const reviewQuestions = this.wrongAnswers.map(wa => wa.questionNumber - 1);
+                alert(`復習モード：${reviewQuestions.length}問の復習を開始します`);
+                
+                // Reset to first wrong question
+                this.currentQuestion = reviewQuestions[0];
+                document.getElementById('results-screen').classList.add('hidden');
+                document.getElementById('question-screen').classList.remove('hidden');
+                this.showQuestion();
+            }
+        }
+
+        // Initialize game
+        const game = new GeminiQuest();
+        
+        // Global functions for HTML onclick handlers
+        function startGame() { game.startGame(); }
+        function nextQuestion() { game.nextQuestion(); }
+        function restartGame() { game.restartGame(); }
+        function reviewWeaknesses() { game.reviewWeaknesses(); }
+    </script>
+</body>
+</html>
